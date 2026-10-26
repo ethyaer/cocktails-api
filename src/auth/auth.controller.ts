@@ -1,4 +1,4 @@
-import { Controller, Get, Param, NotFoundException, Post, Body } from '@nestjs/common';
+import { Controller, Get, Param, NotFoundException, Post, Body, Patch } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserView } from '../entities/views/user.view';
 
@@ -22,13 +22,13 @@ export class AuthController {
         );
     }
 
-    @Get()
-    async changePassword(@Param('userId') userId: number, @Param('oldPassword') oldPassword: string, @Param('newPassword') newPassword: string): Promise<void> {
+    @Patch('change-password')
+    async changePassword(@Body() { userId, oldPassword, newPassword }: { userId: number; oldPassword: string; newPassword: string }): Promise<void> {
         await this.authService.changePassword(userId, oldPassword, newPassword);
     }
 
-    @Get()
-    async changeName(@Param('userId') userId: number, @Param('newName') newName: string): Promise<void> {
+    @Patch('update-name')
+    async changeName(@Body() { userId, newName }: { userId: number; newName: string }): Promise<void> {
         await this.authService.changeName(userId, newName);
     }
 }

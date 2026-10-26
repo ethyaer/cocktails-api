@@ -15,7 +15,7 @@ export class AuthService {
         return this.jwtService.signAsync(payload);
     }
 
-    async loginUser(login: string, password: string): Promise<User | null> {
+    async loginUser(login: string, password: string): Promise<{access_token: string}> {
         // Implement your user validation logic here
         // For example, you can query the database to find the user by login and compare the password
         // If the user is valid, return the user object; otherwise, return null
@@ -29,7 +29,11 @@ export class AuthService {
             throw new UnauthorizedException('Invalid password');
         }
 
-        return user;
+        const payload = {sub: user.userId, login: user.login};
+
+        const access_token = await this.generateToken(payload);
+
+        return { access_token };
     }
 
     async registerUser(login: string, password: string): Promise<{ userId: number; login: string; roleId: number }> {
@@ -51,7 +55,7 @@ export class AuthService {
         });
 
         // Save the new user to the database
-        return { userId: newUser.userId, login: newUser.login, roleId: newUser.roleId };
+        return this.userRepository.save(newUser);
     }
 
     async changePassword(userId: number, oldPassword: string, newPassword: string): Promise<void> {
@@ -81,6 +85,8 @@ export class AuthService {
         await this.userRepository.save(user);
     }
     
-    
+    async logout(userId: number) {
+        return {message: 'Logged out'}
+    }
 
 }
