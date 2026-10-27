@@ -1,11 +1,11 @@
-import {IsBoolean, IsNotEmpty, IsString, IsOptional} from "class-validator";
+import {IsBoolean, IsNotEmpty, IsString, IsOptional, IsInt} from "class-validator";
 
 export class CreateIngredientDto {
     @IsString()
     @IsNotEmpty()
     name: string;
 
-    @IsBoolean()
+    @IsString()
     @IsOptional()
     description?: string;
 

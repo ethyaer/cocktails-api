@@ -5,7 +5,7 @@ export class UpdateIngredientDto {
     @IsNotEmpty()
     name: string;
 
-    @IsBoolean()
+    @IsString()
     @IsOptional()
     description?: string;
 
