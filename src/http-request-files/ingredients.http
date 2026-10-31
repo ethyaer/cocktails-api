@@ -1,0 +1,26 @@
+### GET ingredients
+GET http://localhost:3000/ingredients?pageSize=20&sortBy=name
+
+### Create ingredient
+POST http://localhost:3000/ingredients
+Authorization: Bearer 
+Content-Type: application/json
+
+{
+    "name": "wódka czysta",
+    "description": "lorem ipsum",
+    "photoUrl": "ebeebe",
+    "containsAlcohol": true
+} 
+
+### Update ingredient
+Patch http://localhost:3000/ingredients/6
+Authorization: Bearer 
+Content-Type: application/json
+
+{
+    "name": "wódka czysta",
+    "description": "lorem ipsum12312312312",
+    "photoUrl": "ebeebe345dfg",
+    "containsAlcohol": true
+}

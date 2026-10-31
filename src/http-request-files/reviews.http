@@ -1,0 +1,9 @@
+### Create review
+POST http://localhost:3000/reviews/27
+Authorization: Bearer
+Content-Type: application/json
+
+{
+    "note": 5,
+    "text": "cztery razy wóda, cztery razy"
+}

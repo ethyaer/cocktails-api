@@ -1,0 +1,75 @@
+### Wymień wszystkie koktajle z bazy danych.
+GET http://localhost:3000/cocktails
+
+### Wymień koktajl po ID.
+GET http://localhost:3000/cocktails/26
+
+###
+GET http://localhost:3000/cocktails/24
+
+### Utwórz nowy koktajl.
+POST http://localhost:3000/cocktails
+Authorization: Bearer 
+Content-Type: application/json
+
+{
+  "name": "Podwójna wóda zmieszana z potrójną wódą",
+  "recipe": "wlej do szklanki 2 kieliszki wódki, po tym zalej to 3 kieliszkami wódki",
+  "photoUrl": "ebeebebe",
+  "categoryId": 2,
+  "ingredients": [
+    {
+      "ingredientId": 6,
+      "amount": 50
+    },
+    {
+      "ingredientId": 6,
+      "amount": 50
+    },
+    {
+      "ingredientId": 6,
+      "amount": 50
+    },
+    {
+      "ingredientId": 6,
+      "amount": 50
+    },
+    {
+      "ingredientId": 6,
+      "amount": 50
+    }
+  ]
+}
+
+### Zaktualizuj koktajl po ID.
+PATCH http://localhost:3000/cocktails/26
+Authorization: Bearer 
+Content-Type: application/json
+
+{
+  "name": "Kamikaze(blue)",
+  "recipe": "An updated description for the classic cocktail.",
+  "categoryId": 1,
+  "ingredients": [
+    {
+      "ingredientId": 1,
+      "amount": 60
+    },
+    {
+      "ingredientId": 2,
+      "amount": 30
+    },
+    {
+      "ingredientId": 3,
+      "amount": 20
+    }
+  ]
+}
+
+### Usuń koktajl po ID.
+DELETE http://localhost:3000/cocktails/{{cocktailId}}
+
+### usuwanie
+### Usuwanie koktajlu
+DELETE http://localhost:3000/cocktails/26
+Authorization: Bearer 
