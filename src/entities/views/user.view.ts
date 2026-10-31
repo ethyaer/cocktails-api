@@ -8,9 +8,6 @@ export class UserView {
     @ViewColumn({ name: "name" })
     name: string;
 
-    @ViewColumn({ name: "email" })
-    email: string;
-
     @ViewColumn({ name: "login" })
     login: string;
 

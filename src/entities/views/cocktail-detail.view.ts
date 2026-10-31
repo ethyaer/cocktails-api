@@ -35,6 +35,9 @@ export class CocktailDetailsView {
   @ViewColumn({ name: 'category_name' })
   categoryName: string | null;
 
+   @ViewColumn({ name: "creator_id" })
+    creatorId: number;
+
   @ViewColumn({ name: 'creator_name' })
   creatorName: string | null;
 

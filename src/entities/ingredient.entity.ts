@@ -1,6 +1,7 @@
 
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, OneToOne, ManyToOne, JoinColumn } from 'typeorm';
 import { CocktailIngredient } from './cocktail-ingredient.entity';
+import { User } from './user.entity';
 
 @Entity({ name: 'ingredients', schema: 'public' })
 export class Ingredient {
@@ -18,6 +19,14 @@ export class Ingredient {
 
   @Column({ name: 'contains_alcohol', type: 'boolean', nullable: true })
   containsAlcohol: boolean | null;
+
+  @Column({ name: 'creator_id', type: 'integer'})
+  creatorId: number;
+
+  @ManyToOne(() => User, user => user.userId)
+  @JoinColumn({ name: 'creator_id', referencedColumnName: 'userId'})
+    creator: User;
+
 
   @OneToMany(() => CocktailIngredient, ci => ci.ingredient)
   cocktailIngredients: CocktailIngredient[];

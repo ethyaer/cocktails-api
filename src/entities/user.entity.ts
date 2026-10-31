@@ -2,9 +2,13 @@ import {Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, JoinColumn
 import { Review } from './review.entity';
 import { Cocktail } from './cocktail.entity';
 import { Role } from './role.entity';
+import { Ingredient } from './ingredient.entity';
 
 @Entity({ name: 'users', schema: 'public' })
 export class User {
+    static findOne(arg0: { where: { login: string; }; }) {
+        throw new Error('Method not implemented.');
+    }
   @PrimaryGeneratedColumn({ name: 'user_id', type: 'integer' })
   userId: number;
 
@@ -14,11 +18,8 @@ export class User {
     @Column({ name: 'login', type: 'varchar' })
     login: string;
 
-    @Column({ name: 'email', type: 'varchar', unique: true })
-    email: string;
-
-    @Column({ name: 'password', type: 'varchar' })
-    password: string;
+    @Column({ name: 'password_hash', type: 'varchar' })
+    passwordHash: string;
 
     @Column({ name: 'role_id', type: 'integer' })
     roleId: number;
@@ -32,4 +33,7 @@ export class User {
 
     @OneToMany(() => Review, review => review.user)
     reviews: Review[];
+
+    @OneToMany(() => Ingredient, ingredient => ingredient.creator)
+    ingredients: Ingredient[];
 }

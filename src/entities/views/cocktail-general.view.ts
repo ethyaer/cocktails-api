@@ -8,11 +8,14 @@ export class CocktailGeneralView {
     @ViewColumn({ name: "name" })
     name: string;
 
-    @ViewColumn({ name: "photo_url" })
+    @ViewColumn({ name: "photourl" })
     photoUrl: string;
 
     @ViewColumn({ name: "category_name" })
     categoryName: string;
+
+    @ViewColumn({ name: "creator_id" })
+    creatorId: number;
 
     @ViewColumn({ name: "creator_name" })
     creatorName: string;

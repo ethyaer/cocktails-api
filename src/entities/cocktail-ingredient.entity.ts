@@ -4,7 +4,7 @@ import { Ingredient } from './ingredient.entity';
 
 @Entity({ name: 'cocktail_ingredients', schema: 'public' })
 export class CocktailIngredient {
-  @PrimaryGeneratedColumn({ name: 'cocktail_ingredient_id', type: 'integer' })
+  @PrimaryGeneratedColumn({ name: 'ci_id', type: 'integer' })
   cocktailIngredientId: number;
 
    @Column({ name: 'cocktail_id', type: 'integer', nullable: false })

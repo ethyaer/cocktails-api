@@ -13,11 +13,11 @@ export class Review {
     @Column({ name: 'user_id', type: 'integer', nullable: false })
     userId: number;
 
-    @Column({ name: 'rating', type: 'integer', nullable: false })
-    rating: number;
+    @Column({ name: 'note', type: 'integer', nullable: false })
+    note: number;
 
-    @Column({ name: 'comment', type: 'text', nullable: true })
-    comment: string | null;
+    @Column({ name: 'text', type: 'text', nullable: true })
+    text: string | null;
 
     @ManyToOne(() => Cocktail, cocktail => cocktail.reviews)
     @JoinColumn({ name: 'cocktail_id', referencedColumnName: 'cocktailId' })
