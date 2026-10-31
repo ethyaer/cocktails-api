@@ -2,10 +2,10 @@
 GET http://localhost:3000/cocktails
 
 ### Wymień koktajl po ID.
-GET http://localhost:3000/cocktails/26
+GET http://localhost:3000/cocktails/{id}
 
 ###
-GET http://localhost:3000/cocktails/24
+GET http://localhost:3000/cocktails/
 
 ### Utwórz nowy koktajl.
 POST http://localhost:3000/cocktails
@@ -13,55 +13,55 @@ Authorization: Bearer
 Content-Type: application/json
 
 {
-  "name": "Podwójna wóda zmieszana z potrójną wódą",
-  "recipe": "wlej do szklanki 2 kieliszki wódki, po tym zalej to 3 kieliszkami wódki",
-  "photoUrl": "ebeebebe",
-  "categoryId": 2,
+  "name": "",
+  "recipe": "",
+  "photoUrl": "",
+  "categoryId": ,
   "ingredients": [
     {
-      "ingredientId": 6,
-      "amount": 50
+      "ingredientId": ,
+      "amount": 
     },
     {
-      "ingredientId": 6,
-      "amount": 50
+      "ingredientId": ,
+      "amount":
     },
     {
-      "ingredientId": 6,
-      "amount": 50
+      "ingredientId": ,
+      "amount": 
     },
     {
-      "ingredientId": 6,
-      "amount": 50
+      "ingredientId": ,
+      "amount": 
     },
     {
-      "ingredientId": 6,
-      "amount": 50
+      "ingredientId": ,
+      "amount": 
     }
   ]
 }
 
 ### Zaktualizuj koktajl po ID.
-PATCH http://localhost:3000/cocktails/26
+PATCH http://localhost:3000/cocktails/{id}
 Authorization: Bearer 
 Content-Type: application/json
 
 {
-  "name": "Kamikaze(blue)",
-  "recipe": "An updated description for the classic cocktail.",
-  "categoryId": 1,
+  "name": "",
+  "recipe": "",
+  "categoryId": ,
   "ingredients": [
     {
-      "ingredientId": 1,
-      "amount": 60
+      "ingredientId": ,
+      "amount": 
     },
     {
-      "ingredientId": 2,
-      "amount": 30
+      "ingredientId": ,
+      "amount": 
     },
     {
-      "ingredientId": 3,
-      "amount": 20
+      "ingredientId": ,
+      "amount": 
     }
   ]
 }
@@ -71,5 +71,5 @@ DELETE http://localhost:3000/cocktails/{{cocktailId}}
 
 ### usuwanie
 ### Usuwanie koktajlu
-DELETE http://localhost:3000/cocktails/26
+DELETE http://localhost:3000/cocktails/
 Authorization: Bearer 

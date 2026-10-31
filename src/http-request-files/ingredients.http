@@ -7,20 +7,20 @@ Authorization: Bearer
 Content-Type: application/json
 
 {
-    "name": "wódka czysta",
-    "description": "lorem ipsum",
-    "photoUrl": "ebeebe",
+    "name": "",
+    "description": "",
+    "photoUrl": "",
     "containsAlcohol": true
 } 
 
 ### Update ingredient
-Patch http://localhost:3000/ingredients/6
+Patch http://localhost:3000/ingredients/{id}
 Authorization: Bearer 
 Content-Type: application/json
 
 {
-    "name": "wódka czysta",
-    "description": "lorem ipsum12312312312",
-    "photoUrl": "ebeebe345dfg",
+    "name": "",
+    "description": "",
+    "photoUrl": "",
     "containsAlcohol": true
 }

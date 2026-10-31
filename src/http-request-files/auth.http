@@ -3,8 +3,8 @@ POST http://localhost:3000/auth/register
 Content-Type: application/json
 
 {
-  "login": "admin",
-  "password": "1234"
+  "login": "",
+  "password": ""
 }
 
 
@@ -13,8 +13,8 @@ POST http://localhost:3000/auth/login
 Content-Type: application/json
 
 {
-  "login": "dupa",
-  "password": "1234"
+  "login": "",
+  "password": ""
 }
 
 ### zmiana nazwy użytkownika
@@ -22,6 +22,6 @@ PATCH http://localhost:3000/auth/update-name
 Content-Type: application/json
 
 {
-  "userId": 2,
-  "newName": "Zbychu"
+  "userId": ,
+  "newName": ""
 }

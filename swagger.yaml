@@ -1,0 +1,925 @@
+openapi: 3.0.3
+info:
+  title: Cocktails API
+  description: API for managing cocktails, ingredients, reviews, and user accounts.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+tags:
+  - name: General
+  - name: Authentication
+  - name: Cocktails
+  - name: Ingredients
+  - name: Reviews
+paths:
+  /:
+    get:
+      tags: [General]
+      operationId: getHello
+      summary: Get the API greeting
+      responses:
+        '200':
+          description: Greeting
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: Hello World!
+  /auth/login:
+    post:
+      tags: [Authentication]
+      operationId: loginUser
+      summary: Log in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credentials'
+      responses:
+        '201':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [access_token]
+                properties:
+                  access_token:
+                    type: string
+                    description: JWT access token.
+        '401':
+          description: Password is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auth/register:
+    post:
+      tags: [Authentication]
+      operationId: registerUser
+      summary: Register an account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credentials'
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisteredUser'
+        '409':
+          description: Login is already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auth/change-password:
+    patch:
+      tags: [Authentication]
+      operationId: changePassword
+      summary: Change a user's password
+      description: This route accepts the user ID in the body and is not protected by a JWT guard.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, oldPassword, newPassword]
+              properties:
+                userId:
+                  type: integer
+                oldPassword:
+                  type: string
+                  format: password
+                newPassword:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Password changed
+        '401':
+          description: Old password is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auth/update-name:
+    patch:
+      tags: [Authentication]
+      operationId: changeName
+      summary: Change a user's name
+      description: This route accepts the user ID in the body and is not protected by a JWT guard.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, newName]
+              properties:
+                userId:
+                  type: integer
+                newName:
+                  type: string
+      responses:
+        '200':
+          description: Name changed
+        '404':
+          description: User was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cocktails:
+    get:
+      tags: [Cocktails]
+      operationId: listCocktails
+      summary: List cocktails
+      description: Returns a paginated cocktail list. The controller declares two GET handlers for this same path, one returning cocktail details and one returning general cocktail views; optional sorting parameters document both handlers.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: sortBy
+          in: query
+          description: Sort field. The controller's sorted-list handler recognizes name, ingredientId, and containsAlcohol.
+          required: false
+          schema:
+            type: string
+            enum: [name, ingredientId, containsAlcohol]
+        - name: order
+          in: query
+          description: Sort direction.
+          required: false
+          schema:
+            type: string
+            enum: [ASC, DESC]
+      responses:
+        '200':
+          description: Paginated cocktails
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CocktailPage'
+    post:
+      tags: [Cocktails]
+      operationId: createCocktail
+      summary: Create a cocktail
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCocktail'
+      responses:
+        '201':
+          description: Cocktail created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CocktailDetails'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: A cocktail with this name already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cocktails/filter:
+    get:
+      tags: [Cocktails]
+      operationId: filterCocktails
+      summary: Filter cocktails
+      description: The static filter route is declared after a parameterized route and may be shadowed by it in the current routing order.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: categoryName
+          in: query
+          description: Repeat the parameter to select multiple categories.
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: minRating
+          in: query
+          required: false
+          schema:
+            type: number
+        - name: maxRating
+          in: query
+          required: false
+          schema:
+            type: number
+        - name: ingredients
+          in: query
+          description: Repeat the parameter to match multiple ingredient names.
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: Matching cocktails
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CocktailGeneralPage'
+  /cocktails/{cocktailId}:
+    parameters:
+      - name: cocktailId
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [Cocktails]
+      operationId: getCocktailById
+      summary: Get cocktail details
+      responses:
+        '200':
+          description: Cocktail details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CocktailDetails'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Cocktails]
+      operationId: updateCocktail
+      summary: Update a cocktail
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCocktail'
+      responses:
+        '200':
+          description: Updated cocktail details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CocktailDetails'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: A cocktail with this name already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags: [Cocktails]
+      operationId: deleteCocktail
+      summary: Delete a cocktail
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Cocktail deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /ingredients:
+    get:
+      tags: [Ingredients]
+      operationId: listIngredients
+      summary: List ingredients
+      description: The unfiltered handler returns the repository findAndCount tuple under data; optional sorting parameters document the second GET handler declared for this path.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: sortBy
+          in: query
+          description: Sort field.
+          required: false
+          schema:
+            type: string
+            enum: [name, ingredientId, containsAlcohol]
+        - name: order
+          in: query
+          description: Sort direction.
+          required: false
+          schema:
+            type: string
+            enum: [ASC, DESC]
+      responses:
+        '200':
+          description: Paginated ingredients
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngredientFindAndCountPage'
+    post:
+      tags: [Ingredients]
+      operationId: createIngredient
+      summary: Create an ingredient
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIngredient'
+      responses:
+        '201':
+          description: Ingredient created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ingredient'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: An ingredient with this name already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /ingredients/filter:
+    get:
+      tags: [Ingredients]
+      operationId: filterIngredients
+      summary: Filter ingredients
+      description: The static filter route is declared after a parameterized route and may be shadowed by it in the current routing order.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: containsAlcohol
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Matching ingredients
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngredientPage'
+  /ingredients/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [Ingredients]
+      operationId: getIngredientById
+      summary: Get an ingredient
+      responses:
+        '200':
+          description: Ingredient
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ingredient'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Ingredients]
+      operationId: updateIngredient
+      summary: Update an ingredient
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateIngredient'
+      responses:
+        '200':
+          description: Updated ingredient
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ingredient'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Ingredients]
+      operationId: deleteIngredient
+      summary: Delete an ingredient
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Ingredient deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /reviews/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Cocktail ID for POST; review ID for PATCH and DELETE. The GET handler's intended ID is ambiguous.
+        schema:
+          type: integer
+    get:
+      tags: [Reviews]
+      operationId: getReviewsById
+      summary: List reviews by cocktail or user ID
+      description: The controller declares two GET handlers with the same route shape (one by cocktail ID and one by user ID), and neither binds its path argument with @Param. Consequently, the current route is ambiguous; this operation documents the shared route but cannot distinguish the intended lookup.
+      responses:
+        '200':
+          description: Review records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReviewSummary'
+    post:
+      tags: [Reviews]
+      operationId: createReview
+      summary: Review a cocktail
+      description: Creates the authenticated user's review for the cocktail identified by the path.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReview'
+      responses:
+        '201':
+          description: Review created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Cocktail was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: User has already reviewed this cocktail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      tags: [Reviews]
+      operationId: updateReview
+      summary: Update a review
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReview'
+      responses:
+        '200':
+          description: Updated review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Reviews]
+      operationId: deleteReview
+      summary: Delete a review
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Review deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Page:
+      name: page
+      in: query
+      required: false
+      description: One-based page number.
+      schema:
+        type: integer
+        default: 1
+      example: 1
+    PageSize:
+      name: pageSize
+      in: query
+      required: false
+      description: Number of records per page.
+      schema:
+        type: integer
+        default: 10
+      example: 10
+  responses:
+    Unauthorized:
+      description: Missing or invalid bearer token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Operation is not permitted
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Error:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        message:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+        error:
+          type: string
+    Credentials:
+      type: object
+      required: [login, password]
+      properties:
+        login:
+          type: string
+          maxLength: 20
+        password:
+          type: string
+          format: password
+    RegisteredUser:
+      type: object
+      properties:
+        userId:
+          type: integer
+        name:
+          type: string
+        login:
+          type: string
+        passwordHash:
+          type: string
+          description: The current registration handler returns the saved user entity, including this stored password hash.
+        roleId:
+          type: integer
+    CreateCocktail:
+      type: object
+      required: [name, categoryId]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 40
+        recipe:
+          type: string
+          nullable: true
+        photoUrl:
+          type: string
+          nullable: true
+        categoryId:
+          type: number
+          minimum: 1
+        ingredientIds:
+          type: array
+          items:
+            type: number
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/CocktailIngredientInput'
+    UpdateCocktail:
+      allOf:
+        - $ref: '#/components/schemas/CreateCocktail'
+      description: All CreateCocktail required fields remain required by the current DTO validators, despite this being a PATCH route.
+    CocktailIngredientInput:
+      type: object
+      required: [ingredientId, amount]
+      properties:
+        ingredientId:
+          type: integer
+          minimum: 1
+        amount:
+          type: integer
+    CreateIngredient:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 40
+        description:
+          type: string
+          nullable: true
+        photoUrl:
+          type: string
+          nullable: true
+        containsAlcohol:
+          type: boolean
+          nullable: true
+    UpdateIngredient:
+      allOf:
+        - $ref: '#/components/schemas/CreateIngredient'
+      description: The name remains required by the current DTO validators, despite this being a PATCH route.
+    CreateReview:
+      type: object
+      required: [note]
+      properties:
+        note:
+          type: integer
+          minimum: 1
+          maximum: 5
+        text:
+          type: string
+          nullable: true
+    UpdateReview:
+      type: object
+      required: [cocktailId, note]
+      properties:
+        cocktailId:
+          type: integer
+        note:
+          type: integer
+          minimum: 1
+          maximum: 5
+        text:
+          type: string
+          nullable: true
+    CocktailGeneral:
+      type: object
+      properties:
+        cocktailId:
+          type: integer
+        name:
+          type: string
+        photoUrl:
+          type: string
+          nullable: true
+        categoryName:
+          type: string
+        creatorId:
+          type: integer
+        creatorName:
+          type: string
+        averageRating:
+          type: string
+          nullable: true
+    CocktailDetails:
+      type: object
+      properties:
+        cocktailId:
+          type: integer
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        photoUrl:
+          type: string
+          nullable: true
+        recipe:
+          type: string
+          nullable: true
+        categoryName:
+          type: string
+          nullable: true
+        creatorId:
+          type: integer
+        creatorName:
+          type: string
+          nullable: true
+        averageRating:
+          type: string
+          nullable: true
+        ingredients:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/CocktailDetailIngredient'
+        reviews:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/CocktailDetailReview'
+    CocktailDetailIngredient:
+      type: object
+      properties:
+        ingredient_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        photourl:
+          type: string
+          nullable: true
+        contains_alcohol:
+          type: boolean
+          nullable: true
+        amount:
+          type: integer
+    CocktailDetailReview:
+      type: object
+      properties:
+        review_id:
+          type: integer
+        user_id:
+          type: integer
+          nullable: true
+        user_name:
+          type: string
+          nullable: true
+        text:
+          type: string
+          nullable: true
+        note:
+          type: integer
+    ReviewSummary:
+      type: object
+      properties:
+        review_review_id:
+          type: integer
+        review_note:
+          type: integer
+        review_user_id:
+          type: integer
+        review_text:
+          type: string
+          nullable: true
+        review_cocktail_id:
+          type: integer
+        user_name:
+          type: string
+    Review:
+      type: object
+      properties:
+        reviewId:
+          type: integer
+        cocktailId:
+          type: integer
+        userId:
+          type: integer
+        note:
+          type: integer
+          minimum: 1
+          maximum: 5
+        text:
+          type: string
+          nullable: true
+    Ingredient:
+      type: object
+      properties:
+        ingredientId:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        photoUrl:
+          type: string
+          nullable: true
+        containsAlcohol:
+          type: boolean
+          nullable: true
+        creatorId:
+          type: integer
+    CocktailGeneralPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CocktailGeneral'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    CocktailPage:
+      type: object
+      description: The duplicate GET handlers for /cocktails may return either the details view or the general view.
+      properties:
+        data:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/CocktailDetails'
+              - $ref: '#/components/schemas/CocktailGeneral'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    IngredientPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ingredient'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    IngredientFindAndCountPage:
+      type: object
+      description: The unfiltered list handler puts TypeORM's [records, count] tuple under data.
+      properties:
+        data:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            oneOf:
+              - type: array
+                items:
+                  $ref: '#/components/schemas/Ingredient'
+              - type: integer
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    Pagination:
+      type: object
+      properties:
+        offset:
+          type: integer
+        limit:
+          type: integer
+        currentPage:
+          type: integer
+        totalPages:
+          type: number
