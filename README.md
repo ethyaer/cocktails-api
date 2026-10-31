@@ -1,6 +1,6 @@
 
 # cocktails-api
-Zadanie rekrutacyjne do KS Solvro(backend)
+Zadanie rekrutacyjne do KN Solvro(backend)
 
 REST API do zarządzania koktajlami i składnikami.
 
