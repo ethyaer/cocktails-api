@@ -8,7 +8,7 @@ export class CreateCocktailDto {
 
     @IsString()
     @IsOptional()
-    description?: string;
+    recipe?: string;
 
     @IsString()
     @IsOptional()

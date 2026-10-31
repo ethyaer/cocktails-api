@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseIntPipe, NotFoundException, Delete, Req } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, NotFoundException, Delete, Req, Query, DefaultValuePipe } from '@nestjs/common';
 import { CocktailsService } from './cocktails.service';
 import { CocktailGeneralView } from '../entities/views/cocktail-general.view';
 import { CocktailDetailsView } from '../entities/views/cocktail-detail.view';
@@ -18,8 +18,11 @@ export class CocktailsController {
     constructor(private readonly cocktailsService: CocktailsService) {}
 
     @Get()
-    async getCocktails(): Promise<CocktailGeneralView[]> {
-        return this.cocktailsService.getCocktails();
+    async getCocktails(
+        @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number, 
+        @Query('pageSize', new DefaultValuePipe(10), ParseIntPipe) pageSize: number
+    ) {
+        return this.cocktailsService.getCocktails(page, pageSize);
     }
 
     @Get(':cocktailId')
@@ -31,14 +34,26 @@ export class CocktailsController {
             return cocktail;
     }
 
+    @Get()
+    async getSortedCocktails(
+        @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number, 
+        @Query('pageSize', new DefaultValuePipe(10), ParseIntPipe) pageSize: number,
+        @Query('sortBy') sortBy: string,
+        @Query('order') order: string
+    ) {
+        return this.cocktailsService.getSortedCocktails(sortBy, order, page, pageSize);
+    }
+
     @Get('filter')
     async getCocktailsByFilters(
-        @Param('name') name?: string,
-        @Param('categoryName') categoryName?: string[],
-        @Param('minRating') minRating?: number,
-        @Param('maxRating') maxRating?: number,
-        @Param('ingredients') ingredients?: string[]
-    ): Promise<CocktailGeneralView[]> {
+        @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+        @Query('pageSize', new DefaultValuePipe(10), ParseIntPipe) pageSize: number,
+        @Query('name') name?: string,
+        @Query('categoryName') categoryName?: string[],
+        @Query('minRating') minRating?: number,
+        @Query('maxRating') maxRating?: number,
+        @Query('ingredients') ingredients?: string[],
+    ) {
         const filter: {
             name?: string,
             categoryName?: string[],
@@ -53,7 +68,7 @@ export class CocktailsController {
         if (maxRating !== undefined) filter.maxRating = maxRating;
         if (ingredients) filter.ingredients = ingredients;
 
-        return this.cocktailsService.getCocktailsByFilters(filter);
+        return this.cocktailsService.getCocktailsByFilters(filter, page, pageSize);
     }
 
     @Post()

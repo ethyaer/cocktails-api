@@ -5,6 +5,10 @@ import { Ingredient } from '../entities/ingredient.entity';
 import { CreateIngredientDto } from './DTOs/create-ingredient.dto';
 import { UpdateIngredientDto } from './DTOs/update-ingredient.dto';
 import { NotFoundException } from '@nestjs/common';
+import { PaginationUtil } from '../pagination/pagination.util';
+import { skip } from 'node:test';
+import { User } from '../entities/user.entity';
+import { CocktailIngredient } from '../entities/cocktail-ingredient.entity';
 
 @Injectable()
 export class IngredientsService {
@@ -16,15 +20,57 @@ export class IngredientsService {
 
     ) {}
 
-    async getIngredients(): Promise<Ingredient[]> {
+    /*async getIngredients(): Promise<Ingredient[]> {
         return this.ingredientRepository.find();
+    }*/
+
+    async getIngredients(page = 1, pageSize = 10) {
+        const pag = new PaginationUtil();
+        pag.setPageSize(pageSize);
+
+        const rowsNum = await this.ingredientRepository.count();
+        const {offset, limit} = pag.getPagination(page, rowsNum);
+
+        const ingredients = await this.ingredientRepository.findAndCount({skip: offset, take: limit});
+
+        return {data: ingredients, pagination: pag.getPagination(page, rowsNum)};
     }
 
-    async getIngredientById(ingredientId: number): Promise<Ingredient | null> {
+    async getIngredientById(ingredientId: number) : Promise<Ingredient | null> {
         return this.ingredientRepository.findOne({ where: { ingredientId } });
     }
 
-    async getIngredientsByFilters(filter: { name?: string, containsAlcohol?: boolean }): Promise<Ingredient[]> {
+    async getSortedIngredients(sortBy: string, order: string, page = 1, pageSize = 10) {
+        const queryBuilder = this.ingredientRepository.createQueryBuilder('ingredient');
+
+        const sortingFields = ['name', 'ingredientId', 'containsAlcohol'];
+        const orders = ['ASC', 'DESC'];
+
+        if(sortingFields.includes(sortBy) && orders.includes(order))
+            if(order = 'ASC')
+                queryBuilder.orderBy(`ingredient.${sortBy}`, 'ASC');
+            else
+                queryBuilder.orderBy(`ingredient.${sortBy}`, 'DESC');
+
+        //if(sortingFields.includes(sortBy))
+          //  queryBuilder.orderBy(`ingredient.${sortBy}`, 'ASC');
+
+        //pagination
+        const pag = new PaginationUtil();
+        pag.setPageSize(pageSize);
+
+        const rowsNum = await this.ingredientRepository.count();
+        const {offset, limit} = pag.getPagination(page, rowsNum);
+
+        const ingredients = await queryBuilder.skip(offset).take(limit).getMany();
+
+        return {
+            data: ingredients,
+            pagination: pag.getPagination(page, rowsNum)
+        }
+    }
+
+    async getIngredientsByFilters(filter: { name?: string, containsAlcohol?: boolean }, page = 1, pageSize = 10) {
         const queryBuilder = this.ingredientRepository.createQueryBuilder('ingredient');
 
         if (filter.name) {
@@ -35,10 +81,22 @@ export class IngredientsService {
             queryBuilder.andWhere('ingredient.containsAlcohol = :containsAlcohol', { containsAlcohol: filter.containsAlcohol });
         }
 
-        return queryBuilder.getMany();
+        //pagination
+        const pag = new PaginationUtil();
+        pag.setPageSize(pageSize);
+
+        const rowsNum = await this.ingredientRepository.count();
+        const {offset, limit} = pag.getPagination(page, rowsNum);
+
+        const ingredients = await queryBuilder.skip(offset).take(limit).getMany();
+
+        return {
+            data: ingredients,
+            pagination: pag.getPagination(page, rowsNum)
+        }
     }
 
-    async createIngredient(ingredientData: CreateIngredientDto, creatorId: number): Promise<Ingredient> {
+    async createIngredient(ingredientData: CreateIngredientDto, creatorId: number) : Promise<Ingredient> {
         return this.dataSource.transaction(async(manager) => {
             const doesIngredientExists = await manager.createQueryBuilder(Ingredient, 'ingredient')
                 .where('ingredient.name = :name', {name: ingredientData.name}).getOne();
@@ -58,7 +116,7 @@ export class IngredientsService {
         });
     }
 
-    async updateIngredient(ingredientId: number, ingredientData: UpdateIngredientDto, userId: number): Promise<Ingredient | null> {
+    async updateIngredient(ingredientId: number, ingredientData: UpdateIngredientDto, userId: number) : Promise<Ingredient | null> {
         return this.dataSource.transaction(async(manager) => {
             const ingredient = await manager.findOne(Ingredient, {where: {ingredientId}});
             if(!ingredient)
@@ -83,7 +141,27 @@ export class IngredientsService {
         });
     }
 
-    //There's no logic for deleting ingredients 'cause they could be a part of some cocktails.
-    //Deleting an ingredient would force the erasing of some cocktails they use it and that's not what we actually want.
-    //Past added ingredients even when not used can be in the future useful for creating another recipes. 
+    async deleteIngredient(ingredientId: number, userId: number) : Promise<void>{
+        return this.dataSource.transaction(async manager => {
+            const ingredient = await manager.findOne(Ingredient, {where: {ingredientId}});
+            if(!ingredient)
+                throw new NotFoundException('Ingredient not found');
+
+            const userRoleId = await manager.createQueryBuilder(User, 'user')
+                             .innerJoin('user.role', 'role')
+                             .where('user.userId = :userId', {userId})
+                             .select('role.roleId', 'roleId')
+                             .getRawOne();
+
+            if(ingredient.creatorId !== userId && userRoleId?.roleId === 1) {
+                throw new ForbiddenException('You are not the owner of this cocktail or an administrator');
+            }
+            
+            const isUsed = await manager.findOne(CocktailIngredient, {where: {ingredientId}});
+            if(isUsed)
+                throw new ForbiddenException('This ingredient is related with some cocktails so it cannot be deleted');
+
+            await manager.remove(Ingredient, ingredient);
+        });
+    }
 }
